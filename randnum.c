@@ -18,6 +18,30 @@
 
 #include "pwgen.h"
 
+
+#if defined(_WIN32)
+#include <windows.h>
+
+int pw_random_number(max_num)
+	int max_num;
+{
+	unsigned int rand_num;
+	HCRYPTPROV ctx;
+
+	if (CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL, 0)) {
+		if (CryptGenRandom(ctx, sizeof(rand_num), (BYTE *)&rand_num)) {
+			CryptReleaseContext(ctx, 0);
+			// printf("rand_num: %u\n", rand_num);
+			return (rand_num % max_num);
+		}
+	}
+
+	fprintf(stderr, "No entropy available!\n");
+	exit(1);
+}
+
+#else
+
 static int get_random_fd(void);
 
 static int get_random_fd()
@@ -68,3 +92,4 @@ int pw_random_number(max_num)
 	fprintf(stderr, "No entropy available!\n");
 	exit(1);
 }
+#endif
