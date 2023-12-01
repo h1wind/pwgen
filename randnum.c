@@ -25,17 +25,19 @@
 int pw_random_number(max_num)
 	int max_num;
 {
+	static HCRYPTPROV ctx = (HCRYPTPROV)NULL;
 	unsigned int rand_num;
-	HCRYPTPROV ctx;
 
-	if (CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL, 0)) {
-		if (CryptGenRandom(ctx, sizeof(rand_num), (BYTE *)&rand_num)) {
-			CryptReleaseContext(ctx, 0);
-			// printf("rand_num: %u\n", rand_num);
-			return (rand_num % max_num);
+	if (!ctx) {
+		if (!CryptAcquireContext(&ctx, NULL, NULL, PROV_RSA_FULL, 0)) {
+			goto err;
 		}
 	}
+	if (CryptGenRandom(ctx, sizeof(rand_num), (BYTE *)&rand_num)) {
+		return (rand_num % max_num);
+	}
 
+err:
 	fprintf(stderr, "No entropy available!\n");
 	exit(1);
 }
